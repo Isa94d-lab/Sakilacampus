@@ -152,9 +152,58 @@ LIMIT 5;
 
 
 --14. Encuentra la cantidad total de días alquilados por cada cliente en el último mes.
+
+SELECT cliente.id_cliente, cliente.nombre, cliente.apellidos, 
+       SUM(DATEDIFF(alquiler.fecha_devolucion, alquiler.fecha_alquiler)) AS total_dias_alquilados
+FROM cliente
+JOIN alquiler ON cliente.id_cliente = alquiler.id_cliente
+WHERE alquiler.fecha_alquiler >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+AND alquiler.fecha_devolucion IS NOT NULL
+GROUP BY cliente.id_cliente, cliente.nombre, cliente.apellidos
+ORDER BY total_dias_alquilados DESC;
+
+
 --15. Muestra el número de alquileres diarios en cada almacén durante el último trimestre.
+
+SELECT almacen.id_almacen, almacen.id_direccion, DATE(alquiler.fecha_alquiler) AS fecha, 
+       COUNT(alquiler.id_alquiler) AS cantidad_alquileres
+FROM alquiler
+JOIN inventario ON alquiler.id_inventario = inventario.id_inventario
+JOIN almacen ON inventario.id_almacen = almacen.id_almacen
+WHERE alquiler.fecha_alquiler >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+GROUP BY almacen.id_almacen, almacen.id_direccion, fecha
+ORDER BY fecha DESC;
+
+
 --16. Calcula los ingresos totales generados por cada almacén en el último semestre.
+
+SELECT almacen.id_almacen, almacen.id_direccion, SUM(pago.total) AS ingresos_totales
+FROM pago
+JOIN alquiler ON pago.id_alquiler = alquiler.id_alquiler
+JOIN inventario ON alquiler.id_inventario = inventario.id_inventario
+JOIN almacen ON inventario.id_almacen = almacen.id_almacen
+WHERE pago.fecha_pago >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+GROUP BY almacen.id_almacen, almacen.id_direccion
+ORDER BY ingresos_totales DESC;
+
+
 --17. Encuentra el cliente que ha realizado el alquiler más caro en el último año.
+
+SELECT cliente.id_cliente, cliente.nombre, cliente.apellidos, pago.total AS monto_alquiler
+FROM pago
+JOIN alquiler ON pago.id_alquiler = alquiler.id_alquiler
+JOIN cliente ON alquiler.id_cliente = cliente.id_cliente
+WHERE pago.fecha_pago >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+ORDER BY pago.total DESC
+LIMIT 1;
+
+
 --18. Lista las cinco categorías con más ingresos generados durante los últimos tres meses.
 --19. Obtén la cantidad de películas alquiladas por cada idioma en el último mes.
 --20. Lista los clientes que no han realizado ningún alquiler en el último año
+
+SELECT cliente.id_cliente, cliente.nombre, cliente.apellidos
+FROM cliente
+LEFT JOIN alquiler ON cliente.id_cliente = alquiler.id_cliente
+AND alquiler.fecha_alquiler >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+WHERE alquiler.id_alquiler IS NULL;
